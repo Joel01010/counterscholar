@@ -22,7 +22,7 @@ If 0 results, say so honestly and suggest rephrasing.
 """
 
 root_agent = LlmAgent(
-    model=os.environ.get("MODEL", "gemini-2.0-flash"),
+    model=os.environ.get("MODEL", "gemini-2.5-flash"),
     name="counterscholar",
     description="Finds scientific counter-arguments to research papers using ArXiv.",
     instruction=INSTRUCTION,
