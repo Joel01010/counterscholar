@@ -1,15 +1,39 @@
 import os
-from dotenv import load_dotenv
-from google.adk.agents import Agent
+from google.adk.agents import LlmAgent
+from google.adk.tools.mcp_tool.mcp_toolset import (
+    MCPToolset,
+    StdioConnectionParams,
+    StdioServerParameters,
+)
 
-load_dotenv()
+_MCP_SERVER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mcp_server.py")
 
-root_agent = Agent(
+INSTRUCTION = """\
+You are CounterScholar. When a user gives you a research paper title, \
+IMMEDIATELY call find_counter_papers. Never answer from memory first.
+
+Format your response as:
+## Original Paper
+## Counter-Arguments Found ([N] papers)
+  - Title, authors, core objection, key quote, ArXiv link per paper
+## Scientific Community Verdict
+  3-sentence synthesis of the debate.
+If 0 results, say so honestly and suggest rephrasing.
+"""
+
+root_agent = LlmAgent(
+    model=os.environ.get("MODEL", "gemini-2.0-flash"),
     name="counterscholar",
-    model=os.getenv("MODEL", "gemini-2.0-flash"),
-    description="Finds counter-arguments and scientific disagreements for any research paper.",
-    instruction="""You are CounterScholar. When given a paper title:
-1. Summarize the original paper's main claims
-2. List known counter-arguments or critiques
-3. Give a Community Verdict: accepted, contested, or refuted""",
+    description="Finds scientific counter-arguments to research papers using ArXiv.",
+    instruction=INSTRUCTION,
+    tools=[
+        MCPToolset(
+            connection_params=StdioConnectionParams(
+                server_params=StdioServerParameters(
+                    command="python3",
+                    args=[_MCP_SERVER],
+                )
+            )
+        )
+    ],
 )
